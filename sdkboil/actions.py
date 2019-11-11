@@ -5,7 +5,8 @@ from .object import SdkObject
 from .exception import SdkValidationException, \
     UndefinedActionException, \
     UnknownException, \
-    MissingRouteParameterException
+    MissingRouteParameterException, \
+    SdkHttpException
 from .constants import *
 from .requests import Request
 from .headers import CONTENT_TYPE, ACCEPT, APPLICATION_JSON, STAR
@@ -40,8 +41,8 @@ class ActionMeta(type):
 
         def _check_type(attribute, prototype):
             return not (attribute not in prototype or prototype[attribute] and not (
-                isinstance(prototype[attribute], default_attrs[attribute]) or
-                issubclass(prototype[attribute], default_attrs[attribute])))
+                    isinstance(prototype[attribute], default_attrs[attribute]) or
+                    issubclass(prototype[attribute], default_attrs[attribute])))
 
         if name != 'Action':
             for attr in default_attrs:
@@ -202,11 +203,31 @@ class Action(metaclass=ActionMeta):
         response = self.context.client.send(request)
         if response.failed():
             exception = self._get_exception(response)
+            exception.debug_info = self._build_debug_info(request, response)
             self._run_hooks(self.failure_hooks, request=request, response=response, exception=exception)
             raise exception
         else:
             self._run_hooks(self.success_hooks, request=request, response=response)
         return response.format(self.response_body_class, self.headers.get(ACCEPT))
+
+    def _build_debug_info(self, request, response):
+        debug_info = "Request: \n"
+        debug_info += "    Route: {}\n".format(request.route)
+        debug_info += "    Headers:\n"
+        debug_info += self._format_debug_dict(request.headers)
+        debug_info += "    Body:\n"
+        debug_info += "        {}\n".format(request._format_body())
+        debug_info += "    QueryParams: {}\n".format(self._format_debug_dict(request.query_parameters))
+        debug_info += "Response: \n"
+        debug_info += "    Status: {}\n".format(response.status_code)
+        debug_info += "    Headers:\n"
+        debug_info += self._format_debug_dict(response.headers)
+        debug_info += "    Body:\n"
+        debug_info += "        {}\n".format(response.body)
+        return debug_info
+
+    def _format_debug_dict(self, debug_dict: dict):
+        return ''.join(['        {}:{}\n'.format(k, v) for k, v in debug_dict.items()])
 
 
 class ActionsFactory(object):

@@ -96,6 +96,7 @@ class SdkHttpException(SdkException):
     error code.
     """
     error_code = None
+    debug_info = None
 
 
 class UnknownException(SdkHttpException):
