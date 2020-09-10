@@ -2,7 +2,7 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(name='moveax-sdk-boilerplate',
-      version='1.1.1',
+      version='1.2.0',
       packages=find_packages(),
       install_requires=['requests==2.20.0'],
       description='A simple SDK boilerplate',
