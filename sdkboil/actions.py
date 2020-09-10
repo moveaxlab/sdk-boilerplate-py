@@ -2,17 +2,14 @@ import json
 
 from .utils import AbstractAttribute
 from .object import SdkObject
-from .exception import SdkValidationException, \
+from .exception import \
     UndefinedActionException, \
     UnknownException, \
-    MissingRouteParameterException, \
-    SdkHttpException
+    MissingRouteParameterException
 from .constants import *
 from .requests import Request
-from .headers import CONTENT_TYPE, ACCEPT, APPLICATION_JSON, STAR
+from .headers import CONTENT_TYPE, ACCEPT, APPLICATION_JSON
 from .hooks import PresendHook, FailureHook, SuccessHook
-from .serializers import JsonSerializer
-from validation.validator import ValidatorFactory
 
 
 class ActionMeta(type):
@@ -84,7 +81,6 @@ class Action(metaclass=ActionMeta):
     def request_body(self, value):
         if not isinstance(value, self.request_body_class):
             raise ValueError("Request body must be a {} instance".format(self.request_body_class))
-        self._validate_request(value)
         self._request_body = value
 
     @property
@@ -96,7 +92,6 @@ class Action(metaclass=ActionMeta):
     def response_body(self, value):
         if not isinstance(value, self.response_body_class):
             raise ValueError("Request body must be a {} instance".format(self.response_body_class))
-        self._validate_response(value)
         self._response_body = value
 
     @property
@@ -107,7 +102,6 @@ class Action(metaclass=ActionMeta):
     def query_parameters(self, value):
         if not isinstance(value, dict):
             raise ValueError("Request body must be a dictionary")
-        self._validate_query_params(value)
         self._query_parameters = value
 
     @property
@@ -118,32 +112,7 @@ class Action(metaclass=ActionMeta):
     def route_parameters(self, value):
         if not isinstance(value, dict):
             raise ValueError("Request body must be a dictionary")
-        self._validate_route_params(value)
         self._route_parameters = value
-
-    # noinspection PyUnresolvedReferences
-    def _validate_request(self, value):
-        to_validate = json.loads(JsonSerializer.serialize(value))
-        self._validate(to_validate, self.request_body_class.schema)
-
-    # noinspection PyUnresolvedReferences
-    def _validate_response(self, value):
-        to_validate = json.loads(JsonSerializer.serialize(value))
-        self._validate(to_validate, self.response_body_class.schema)
-
-    # noinspection PyUnresolvedReferences
-    def _validate_query_params(self, value):
-        self._validate(value, self.query_parameters_schema)
-
-    # noinspection PyUnresolvedReferences
-    def _validate_route_params(self, value):
-        self._validate(value, self.route_parameters_schema)
-
-    def _validate(self, value, schema):
-        validator = ValidatorFactory.make(schema)
-        is_valid = validator.validate(value)
-        if not is_valid:
-            raise SdkValidationException(validator.errors.to_dict())
 
     def get_exception_key(self, response):
         return response.status_code

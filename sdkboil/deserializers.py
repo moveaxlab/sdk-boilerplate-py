@@ -1,4 +1,6 @@
 import json
+import inspect
+
 from abc import ABC, abstractmethod
 
 from .object import SdkCollectionObject, SdkObject
@@ -24,7 +26,16 @@ class Deserializer(ABC):
         raise NotImplemented("Subclasses must implement this method")
 
 
-class JsonDeserializer(Deserializer):
+class JsonDeserializer(object):
+    @staticmethod
+    def _get_init_args(class_, dict_):
+        init_parameters = dict(inspect.signature(class_.__init__).parameters)
+        init_args = {}
+        for param in dict_:
+            if param in init_parameters:
+                init_args[param] = dict_[param]
+        return init_args
+
     @staticmethod
     def deserialize(class_, json_string):
         """
@@ -35,7 +46,8 @@ class JsonDeserializer(Deserializer):
         if issubclass(class_, SdkCollectionObject):
             return class_(JsonDeserializer._deserialize_array(class_.elements_class, json_data))
         elif issubclass(class_, SdkObject):
-            return class_(**JsonDeserializer._deserialize_dict(class_, json_data))
+            init_args = JsonDeserializer._get_init_args(class_, JsonDeserializer._deserialize_dict(class_, json_data))
+            return class_(**init_args)
         else:
             return json_data
 

@@ -37,59 +37,29 @@ class TestActions(TestCase):
             class _(Action):
                 pass
 
-    def test_validation(self):
-        with patch('sdkboil.actions.ValidatorFactory.make', return_value=TestValidator):
-            with patch('tests.mocks.TestValidator.validate', return_value=False):
-                def test_action_body_validation():
-                    action = TestWriteAction(TestContext(hostname='https://testhostname.com', config=test_config))
-                    with self.assertRaises(SdkValidationException):
-                        action.request_body = TestSdkObject_B('a', 'b')
-
-                def test_action_queryparams_validation():
-                    action = TestReadAction(TestContext(hostname='https://testhostname.com', config=test_config))
-                    with self.assertRaises(SdkValidationException):
-                        action.query_parameters = {}
-
-                def test_action_routeparams_validation():
-                    action = TestReadAction(TestContext(hostname='https://testhostname.com', config=test_config))
-                    with self.assertRaises(SdkValidationException):
-                        action.route_parameters = {}
-
-                def test_action_response_validation():
-                    action = TestReadAction(TestContext(hostname='https://testhostname.com', config=test_config))
-                    with self.assertRaises(SdkValidationException):
-                        action.response_body = TestSdkObject_A('a', 'b', 'c')
-
-                test_action_body_validation()
-                test_action_queryparams_validation()
-                test_action_response_validation()
-                test_action_routeparams_validation()
-
     def test_action_run(self):
         obj_a = TestSdkObject_A('a', 'b', 'c')
         with patch('sdkboil.actions.Action._run_hooks') as mock_hooks:
-            with patch('sdkboil.actions.ValidatorFactory.make', return_value=TestValidator):
-                with patch('tests.mocks.TestValidator.validate', return_value=True):
-                    mock_response = Response(300, {CONTENT_TYPE: APPLICATION_JSON}, {})
-                    with patch('sdkboil.agents.RequestsClient.send', return_value=mock_response):
-                        action = TestReadAction(TestContext(hostname='https://testhostname.com', config=test_config))
-                        with self.assertRaises(TestSdkException):
-                            action.run()
-                        presend_call = mock_hooks.call_args_list[0]
-                        failure_call = mock_hooks.call_args_list[1]
-                        self.assertIn(action.presend_hooks, presend_call[0])
-                        self.assertIn(action.failure_hooks, failure_call[0])
-                    with patch('sdkboil.deserializers.JsonDeserializer.deserialize', return_value=obj_a):
-                        mock_response = Response(200, {CONTENT_TYPE: APPLICATION_JSON}, {})
-                        with patch('sdkboil.agents.RequestsClient.send', return_value=mock_response):
-                            action = TestReadAction(
-                                TestContext(hostname='https://testhostname.com', config=test_config))
-                            response = action.run()
-                            self.assertEqual(response, obj_a)
-                        presend_call = mock_hooks.call_args_list[2]
-                        success_call = mock_hooks.call_args_list[3]
-                        self.assertIn(action.presend_hooks, presend_call[0])
-                        self.assertIn(action.success_hooks, success_call[0])
+            mock_response = Response(300, {CONTENT_TYPE: APPLICATION_JSON}, {})
+            with patch('sdkboil.agents.RequestsClient.send', return_value=mock_response):
+                action = TestReadAction(TestContext(hostname='https://testhostname.com', config=test_config))
+                with self.assertRaises(TestSdkException):
+                    action.run()
+                presend_call = mock_hooks.call_args_list[0]
+                failure_call = mock_hooks.call_args_list[1]
+                self.assertIn(action.presend_hooks, presend_call[0])
+                self.assertIn(action.failure_hooks, failure_call[0])
+            with patch('sdkboil.deserializers.JsonDeserializer.deserialize', return_value=obj_a):
+                mock_response = Response(200, {CONTENT_TYPE: APPLICATION_JSON}, {})
+                with patch('sdkboil.agents.RequestsClient.send', return_value=mock_response):
+                    action = TestReadAction(
+                        TestContext(hostname='https://testhostname.com', config=test_config))
+                    response = action.run()
+                    self.assertEqual(response, obj_a)
+                presend_call = mock_hooks.call_args_list[2]
+                success_call = mock_hooks.call_args_list[3]
+                self.assertIn(action.presend_hooks, presend_call[0])
+                self.assertIn(action.success_hooks, success_call[0])
 
 
 class TestApiContext(TestCase):
