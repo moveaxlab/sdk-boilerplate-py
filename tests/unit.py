@@ -153,6 +153,14 @@ class TestObjects(TestCase):
         self.assertEqual(json.loads(JsonSerializer.serialize(self.obj_b)),
                          json.loads(JsonSerializer.serialize(deser_b)))
 
+    def test_objects_extra_json_deserialization(self):
+        json_a = deepcopy(json_extra_object_a)
+
+        deser_a = JsonDeserializer.deserialize(TestSdkObject_A, json.dumps(json_a))
+        from pprint import pprint
+        self.assertEqual(json.loads(JsonSerializer.serialize(self.obj_a)),
+                         json.loads(JsonSerializer.serialize(deser_a)))
+
     def test_collections_json_serialization(self):
         json_c = JsonSerializer.serialize(self.obj_c)
         self.assertEqual(json.loads(json_c), json_object_c)

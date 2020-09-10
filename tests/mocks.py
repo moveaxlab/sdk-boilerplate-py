@@ -117,7 +117,7 @@ class TestWriteAction(Action):
     presend_hooks = [TestPresendHook]
     success_hooks = [TestSuccessHook]
     failure_hooks = [TestFailureHook]
-    headers = {'Content-Type' : 'application/json'}
+    headers = {'Content-Type': 'application/json'}
 
 
 class TestReadAction(Action):
@@ -132,7 +132,7 @@ class TestReadAction(Action):
     presend_hooks = [TestPresendHook]
     success_hooks = [TestSuccessHook]
     failure_hooks = [TestFailureHook]
-    headers = {'Content-Type' : 'application/json'}
+    headers = {'Content-Type': 'application/json'}
 
     def _get_exception(self, response):
         return self.errors["0404"]
@@ -162,3 +162,11 @@ json_object_a = {"attr_a": "a",
                  }}
 
 json_object_c = [json_object_a]
+
+json_extra_object_a = {"attr_a": "a",
+                       "attr_b": "b",
+                       "extra_a": 1,
+                       "attr_c": {
+                           "attr_d": json_object_b,
+                           "attr_e": [json_object_b],
+                       }}
